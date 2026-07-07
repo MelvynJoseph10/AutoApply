@@ -66,10 +66,12 @@ isn't available on regular release Firefox.
 4. Go to **Certs / Skills** for certifications, skills, and education.
 5. Click **Save**.
 
-### Fast option: import your resume data in one click
-I've pre-filled `my-profile-starter.json` with the work history you gave
-me. Open the popup → **Import backup** → select that file. Then just fill
-in the blank fields (name, email, phone, LinkedIn, education) and hit Save.
+### Try it instantly with example data
+Want to see it in action before entering your own info? Open the popup →
+**Import backup** → select `example-profile.json` (included in this repo).
+It loads a fictional profile ("Jordan Rivera") so you can test the fill
+badge on a real form immediately. Click **Erase all data** afterward before
+entering your own details.
 
 ## Using it on a job application
 
@@ -86,6 +88,15 @@ Use **Export backup** in the popup to save a `.json` file, and **Import
 backup** on another install to load it back in. This file is just your
 data — treat it like you would a resume file (don't upload it anywhere
 you wouldn't upload your resume).
+
+## License
+
+MIT — see [LICENSE](LICENSE). Use it, fork it, modify it, ship it.
+
+## Privacy Policy
+
+See [PRIVACY.md](PRIVACY.md) — short version: nothing is collected or sent
+anywhere, ever.
 
 ## Notes / limitations
 

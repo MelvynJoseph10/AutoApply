@@ -1,0 +1,26 @@
+{
+  "fullName": "Jordan Rivera",
+  "email": "jordan.rivera@example.com",
+  "phone": "+1 (555) 123-4567",
+  "city": "Toronto, ON",
+  "country": "Canada",
+  "linkedin": "https://linkedin.com/in/jordanrivera-example",
+  "portfolio": "https://github.com/jordanrivera-example",
+  "certs": "AWS Certified Cloud Practitioner\nCompTIA Security+",
+  "skills": "Python, JavaScript, AWS, Docker, Git, SQL",
+  "education": "B.Sc. Computer Science, Example University, 2024",
+  "experience": [
+    {
+      "title": "Software Developer",
+      "company": "Example Tech Inc, Toronto ON",
+      "dates": "June 2024 - present",
+      "desc": "Built and maintained web application features using React and Node.js.\nCollaborated with a cross-functional team to ship weekly releases.\nWrote unit and integration tests to keep regressions to a minimum."
+    },
+    {
+      "title": "IT Support Intern",
+      "company": "Example Corp, Remote",
+      "dates": "January 2024 - May 2024",
+      "desc": "Provided first-line support for internal software and hardware issues.\nDocumented recurring issues and created self-serve troubleshooting guides."
+    }
+  ]
+}
