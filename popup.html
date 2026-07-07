@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Autofill Profile</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <h1>Autofill Profile</h1>
+      <span class="badge">Stored locally on this device only</span>
+    </header>
+
+    <div class="tabs">
+      <button class="tab-btn active" data-tab="basics">Basics</button>
+      <button class="tab-btn" data-tab="experience">Experience</button>
+      <button class="tab-btn" data-tab="other">Certs / Skills</button>
+    </div>
+
+    <form id="profileForm">
+      <section data-panel="basics" class="panel active">
+        <label>Full name
+          <input type="text" name="fullName" placeholder="Melvyn ...">
+        </label>
+        <label>Email
+          <input type="email" name="email" placeholder="you@example.com">
+        </label>
+        <label>Phone
+          <input type="tel" name="phone" placeholder="+1 (___) ___-____">
+        </label>
+        <label>City / Province
+          <input type="text" name="city" placeholder="Calgary, AB">
+        </label>
+        <label>Country
+          <input type="text" name="country" placeholder="Canada">
+        </label>
+        <label>LinkedIn URL
+          <input type="text" name="linkedin" placeholder="https://linkedin.com/in/...">
+        </label>
+        <label>Portfolio / GitHub
+          <input type="text" name="portfolio" placeholder="https://github.com/...">
+        </label>
+      </section>
+
+      <section data-panel="experience" class="panel">
+        <p class="hint">One entry per job. This text gets offered as a fill-in for big "work experience" or "cover letter" boxes.</p>
+        <div id="expList"></div>
+        <button type="button" id="addExp" class="secondary">+ Add job</button>
+      </section>
+
+      <section data-panel="other" class="panel">
+        <label>Certifications (one per line)
+          <textarea name="certs" rows="4" placeholder="AWS Certified Solutions Architect - Associate"></textarea>
+        </label>
+        <label>Skills (comma separated)
+          <textarea name="skills" rows="3" placeholder="AWS, Docker, Python, CI/CD"></textarea>
+        </label>
+        <label>Education
+          <textarea name="education" rows="3" placeholder="B.Sc. Computer Science, ..."></textarea>
+        </label>
+      </section>
+
+      <div class="actions">
+        <button type="submit" id="saveBtn">Save</button>
+        <span id="savedMsg" class="saved-msg"></span>
+      </div>
+    </form>
+
+    <footer>
+      <button id="exportBtn" class="link">Export backup</button>
+      <button id="importBtn" class="link">Import backup</button>
+      <button id="wipeBtn" class="link danger">Erase all data</button>
+      <input type="file" id="importFile" accept="application/json" style="display:none">
+    </footer>
+  </div>
+  <script src="popup.js"></script>
+</body>
+</html>
