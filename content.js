@@ -29,7 +29,13 @@
     { key: 'country', words: ['country', 'nation'] },
     { key: 'linkedin', words: ['linkedin'] },
     { key: 'portfolio', words: ['portfolio', 'github', 'website', 'personal site'] },
-    { key: 'education', words: ['education', 'degree', 'university', 'school'] },
+    // Narrow education sub-fields — checked BEFORE the broad "education" rule
+    // so a field asking only for "school" or "degree" gets just that value,
+    // not the whole education history.
+    { key: 'gradYear', words: ['graduation year', 'grad year', 'year of graduation'] },
+    { key: 'degree', words: ['degree', 'major', 'field of study', 'qualification'] },
+    { key: 'school', words: ['school name', 'college name', 'university name', 'institution', 'alma mater', 'school', 'college', 'university'] },
+    { key: 'education', words: ['education', 'academic background', 'qualifications'] },
     { key: 'skills', words: ['skills', 'skillset', 'technologies', 'tech stack'] },
     { key: 'certs', words: ['certification', 'certificate', 'license'] },
     { key: 'experience', words: ['experience', 'work history', 'employment', 'cover letter', 'about you', 'summary', 'tell us'] },
@@ -67,6 +73,7 @@
 
   function valueFor(key) {
     if (!profile) return '';
+    const edu = (profile.education && profile.education.length) ? profile.education[0] : null;
     switch (key) {
       case 'fullName': return profile.fullName || '';
       case 'firstName': return (profile.fullName || '').split(' ')[0] || '';
@@ -77,12 +84,21 @@
       case 'country': return profile.country || '';
       case 'linkedin': return profile.linkedin || '';
       case 'portfolio': return profile.portfolio || '';
-      case 'education': return profile.education || '';
+      case 'school': return edu ? (edu.school || '') : '';
+      case 'degree': return edu ? (edu.degree || '') : '';
+      case 'gradYear': return edu ? (edu.dates || '') : '';
+      case 'education': return formatEducation(profile.education || []);
       case 'skills': return profile.skills || '';
       case 'certs': return profile.certs || '';
       case 'experience': return formatExperience(profile.experience || []);
       default: return '';
     }
+  }
+
+  function formatEducation(list) {
+    return list.map(e =>
+      `${e.degree}${e.school ? ' — ' + e.school : ''}${e.dates ? ' (' + e.dates + ')' : ''}${e.location ? ', ' + e.location : ''}`
+    ).join('\n');
   }
 
   function formatExperience(list) {

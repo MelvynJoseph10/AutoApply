@@ -5,7 +5,27 @@
 const form = document.getElementById('profileForm');
 const expList = document.getElementById('expList');
 const addExpBtn = document.getElementById('addExp');
+const eduList = document.getElementById('eduList');
+const addEduBtn = document.getElementById('addEdu');
 const savedMsg = document.getElementById('savedMsg');
+
+function makeEduEntry(data = {}) {
+  const div = document.createElement('div');
+  div.className = 'exp-entry';
+  div.innerHTML = `
+    <button type="button" class="remove-exp" title="Remove">✕</button>
+    <input type="text" class="edu-degree" placeholder="Degree / program (e.g. B.Sc. Computer Science)" value="${escapeAttr(data.degree || '')}">
+    <input type="text" class="edu-school" placeholder="School / institution" value="${escapeAttr(data.school || '')}">
+    <input type="text" class="edu-dates" placeholder="2024 - 2025" value="${escapeAttr(data.dates || '')}">
+    <input type="text" class="edu-location" placeholder="City, Province/State" value="${escapeAttr(data.location || '')}">
+  `;
+  div.querySelector('.remove-exp').addEventListener('click', () => div.remove());
+  return div;
+}
+
+addEduBtn.addEventListener('click', () => {
+  eduList.appendChild(makeEduEntry());
+});
 
 function makeExpEntry(data = {}) {
   const div = document.createElement('div');
@@ -42,7 +62,7 @@ function loadProfile() {
   chrome.storage.local.get(['profile'], (result) => {
     const profile = result.profile || {};
     for (const [key, val] of Object.entries(profile)) {
-      if (key === 'experience') continue;
+      if (key === 'experience' || key === 'education') continue;
       const field = form.elements[key];
       if (field) field.value = val;
     }
@@ -50,6 +70,11 @@ function loadProfile() {
     (profile.experience || []).forEach(exp => expList.appendChild(makeExpEntry(exp)));
     if (!profile.experience || profile.experience.length === 0) {
       expList.appendChild(makeExpEntry());
+    }
+    eduList.innerHTML = '';
+    (profile.education || []).forEach(edu => eduList.appendChild(makeEduEntry(edu)));
+    if (!profile.education || profile.education.length === 0) {
+      eduList.appendChild(makeEduEntry());
     }
   });
 }
@@ -66,7 +91,12 @@ form.addEventListener('submit', (e) => {
     portfolio: form.portfolio.value.trim(),
     certs: form.certs.value.trim(),
     skills: form.skills.value.trim(),
-    education: form.education.value.trim(),
+    education: Array.from(eduList.querySelectorAll('.exp-entry')).map(div => ({
+      degree: div.querySelector('.edu-degree').value.trim(),
+      school: div.querySelector('.edu-school').value.trim(),
+      dates: div.querySelector('.edu-dates').value.trim(),
+      location: div.querySelector('.edu-location').value.trim(),
+    })).filter(edu => edu.degree || edu.school),
     experience: Array.from(expList.querySelectorAll('.exp-entry')).map(div => ({
       title: div.querySelector('.exp-title').value.trim(),
       company: div.querySelector('.exp-company').value.trim(),

@@ -8,7 +8,14 @@
   "portfolio": "https://github.com/jordanrivera-example",
   "certs": "AWS Certified Cloud Practitioner\nCompTIA Security+",
   "skills": "Python, JavaScript, AWS, Docker, Git, SQL",
-  "education": "B.Sc. Computer Science, Example University, 2024",
+  "education": [
+    {
+      "degree": "B.Sc. Computer Science",
+      "school": "Example University",
+      "dates": "2020 - 2024",
+      "location": "Toronto, ON"
+    }
+  ],
   "experience": [
     {
       "title": "Software Developer",
