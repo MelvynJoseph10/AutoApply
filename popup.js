@@ -53,6 +53,7 @@ function makeEduEntry(data = {}) {
     <input type="text" class="edu-school" placeholder="School / institution" value="${escapeAttr(data.school || '')}">
     <input type="text" class="edu-dates" placeholder="2024 - 2025" value="${escapeAttr(data.dates || '')}">
     <input type="text" class="edu-location" placeholder="City, Province/State" value="${escapeAttr(data.location || '')}">
+    <input type="text" class="edu-gpa" placeholder="GPA (optional, e.g. 3.83)" value="${escapeAttr(data.gpa || '')}">
   `;
   div.querySelector('.remove-exp').addEventListener('click', () => div.remove());
   return div;
@@ -148,6 +149,7 @@ form.addEventListener('submit', (e) => {
       school: div.querySelector('.edu-school').value.trim(),
       dates: div.querySelector('.edu-dates').value.trim(),
       location: div.querySelector('.edu-location').value.trim(),
+      gpa: div.querySelector('.edu-gpa').value.trim(),
     })).filter(edu => edu.degree || edu.school),
     experience: Array.from(expList.querySelectorAll('.exp-entry')).map(div => ({
       title: div.querySelector('.exp-title').value.trim(),

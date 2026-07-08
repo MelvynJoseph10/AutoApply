@@ -20,7 +20,8 @@
       "degree": "B.Sc. Computer Science",
       "school": "Example University",
       "dates": "2020 - 2024",
-      "location": "Toronto, ON"
+      "location": "Toronto, ON",
+      "gpa": "3.7"
     }
   ],
   "experience": [

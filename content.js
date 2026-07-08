@@ -55,11 +55,14 @@
   ];
   // Fields that belong to ONE repeated education block.
   const EDUCATION_RULES = [
+    { key: 'gpa', words: ['gpa', 'grade point average', 'overall result'] },
     { key: 'gradYear', words: ['graduation year', 'grad year', 'year of graduation'] },
     { key: 'degree', words: ['degree', 'major', 'field of study', 'qualification'] },
     { key: 'school', words: ['school name', 'college name', 'university name', 'institution', 'alma mater', 'specify institution', 'specify educational institution', 'specify school', 'specify college', 'specify university', 'other institution', 'school', 'college', 'university'] },
     { key: 'eduLocation', words: ['location', 'city'] },
-    { key: 'eduDates', words: ['from date', 'start date', 'to date', 'end date', 'from', 'to', 'dates'] },
+    { key: 'eduStartDate', words: ['from date', 'start date', 'from'] },
+    { key: 'eduEndDate', words: ['to date', 'end date', 'actual or expected', 'to'] },
+    { key: 'eduDates', words: ['dates'] },
   ];
 
   function isFillable(el) {
@@ -269,7 +272,10 @@
         case 'degree': return edu.degree || '';
         case 'school': return edu.school || '';
         case 'eduLocation': return edu.location || '';
-        case 'gradYear': return edu.dates || '';
+        case 'gpa': return edu.gpa || '';
+        case 'gradYear': return splitDates(edu.dates).end;
+        case 'eduStartDate': return splitDates(edu.dates).start;
+        case 'eduEndDate': return splitDates(edu.dates).end;
         case 'eduDates': return edu.dates || '';
         default: return '';
       }
@@ -393,7 +399,10 @@
         case 'degree': return entry.degree || '';
         case 'school': return entry.school || '';
         case 'eduLocation': return entry.location || '';
-        case 'gradYear': return entry.dates || '';
+        case 'gpa': return entry.gpa || '';
+        case 'gradYear': return splitDates(entry.dates).end;
+        case 'eduStartDate': return splitDates(entry.dates).start;
+        case 'eduEndDate': return splitDates(entry.dates).end;
         case 'eduDates': return entry.dates || '';
         default: return '';
       }
