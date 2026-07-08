@@ -18,7 +18,6 @@
     }
   });
 
-  // ---- Generic (non-repeating) fields ----
   const GENERIC_RULES = [
     { key: 'fullName', words: ['fullname', 'full name', 'yourname', 'name'], exclude: ['first', 'last', 'company', 'user', 'file'] },
     { key: 'firstName', words: ['firstname', 'first name', 'fname', 'givenname'] },
@@ -39,29 +38,35 @@
     { key: 'experience', words: ['experience', 'work history', 'employment', 'cover letter', 'about you', 'summary', 'tell us'] },
   ];
 
-  // ---- Fields specific to ONE repeated job-experience block ----
+  // Fields that belong to ONE repeated job-experience block.
   const EXPERIENCE_RULES = [
     { key: 'jobTitle', words: ['job title', 'position title', 'role title', 'title'] },
     { key: 'company', words: ['company name', 'company', 'employer', 'organization'] },
     { key: 'jobDesc', words: ['role description', 'job description', 'responsibilities', 'duties', 'description'] },
-    { key: 'startDate', words: ['from', 'start date'] },
-    { key: 'endDate', words: ['to', 'end date'] },
+    { key: 'startDate', words: ['from date', 'start date', 'from'] },
+    { key: 'endDate', words: ['to date', 'end date', 'to'] },
     { key: 'jobLocation', words: ['location', 'city'] },
   ];
 
-  // ---- Fields specific to ONE repeated education block ----
+  // Fields that belong to ONE repeated education block.
   const EDUCATION_RULES = [
     { key: 'gradYear', words: ['graduation year', 'grad year', 'year of graduation'] },
     { key: 'degree', words: ['degree', 'major', 'field of study', 'qualification'] },
     { key: 'school', words: ['school name', 'college name', 'university name', 'institution', 'alma mater', 'school', 'college', 'university'] },
     { key: 'eduLocation', words: ['location', 'city'] },
-    { key: 'eduDates', words: ['from', 'start date', 'to', 'end date', 'dates'] },
+    { key: 'eduDates', words: ['from date', 'start date', 'to date', 'end date', 'from', 'to', 'dates'] },
   ];
 
+  function isFillable(el) {
+    if (el.tagName === 'TEXTAREA' || el.tagName === 'SELECT') return true;
+    if (el.tagName === 'INPUT') return ['text', 'email', 'tel', 'url', 'month', 'date', ''].includes(el.type);
+    return false;
+  }
+
   // Catches labels that sit visually next to a field but aren't linked via
-  // <label for="..."> or wrapping (common in date-picker/calendar widgets).
-  // Walks up a few levels, collecting text of any sibling that appears
-  // BEFORE this element at each level.
+  // <label for="..."> or wrapping (common in date-picker/dropdown widgets).
+  // Stops at the first ancestor level that has any preceding-sibling text,
+  // so it doesn't bleed into an unrelated adjacent field's label.
   function getNearbyLabelText(el) {
     let node = el;
     for (let level = 0; level < 3 && node; level++) {
@@ -95,8 +100,6 @@
     return parts.filter(Boolean).join(' ').toLowerCase();
   }
 
-  // Matches a word against the signature. Short words (<=3 chars, e.g. "to")
-  // require a word boundary so they don't false-match inside longer words.
   function wordMatches(sig, w) {
     if (w.length <= 3 && !w.includes(' ')) {
       return new RegExp(`\\b${w}\\b`).test(sig);
@@ -112,11 +115,10 @@
     return null;
   }
 
-  // Finds the nearest heading/legend BEFORE this element, in document order,
-  // that actually looks like a section title (e.g. "Work Experience 5").
-  // Keeps scanning past headings that don't match (e.g. a field's own label
-  // rendered as an h4) instead of giving up on the first one encountered.
-  function findBlockContext(el) {
+  // Keeps scanning backward past headings that don't look like a real
+  // section title (e.g. a field's own label rendered as an h4), instead of
+  // giving up at the first heading it happens to hit.
+  function findSectionContext(el) {
     let node = el;
     let steps = 0;
     while (node && steps < 500) {
@@ -131,36 +133,59 @@
         }
         for (const h of candidates) {
           const text = h.textContent;
-          let m = text.match(/(?:experience|job|position|employment)\D{0,15}(\d+)/i);
-          if (m) return { context: 'experience', index: Math.max(0, parseInt(m[1], 10) - 1) };
-          m = text.match(/education\D{0,15}(\d+)/i);
-          if (m) return { context: 'education', index: Math.max(0, parseInt(m[1], 10) - 1) };
-          if (/work experience|employment history|job history/i.test(text)) return { context: 'experience', index: 0 };
-          if (/education|academic background/i.test(text)) return { context: 'education', index: 0 };
+          if (/experience|employment|job history|position/i.test(text)) return 'experience';
+          if (/education|academic background/i.test(text)) return 'education';
         }
         sib = sib.previousElementSibling;
       }
       node = node.parentElement;
     }
-    return { context: null, index: 0 };
+    return null;
+  }
+
+  // Determines the field's type (jobTitle/company/etc, or a generic key)
+  // WITHOUT deciding which repeated entry it belongs to yet.
+  function classifyField(el) {
+    const sig = fieldSignature(el);
+    if (!sig) return null;
+    const section = findSectionContext(el);
+
+    if (section === 'experience') {
+      const key = matchRules(sig, EXPERIENCE_RULES);
+      if (key) return { key, scope: 'experience' };
+    }
+    if (section === 'education') {
+      const key = matchRules(sig, EDUCATION_RULES);
+      if (key) return { key, scope: 'education' };
+    }
+    const key = matchRules(sig, GENERIC_RULES);
+    if (key) return { key, scope: 'generic' };
+    return null;
+  }
+
+  // Works out WHICH repeated entry (1st job, 2nd job, ...) this field
+  // belongs to by counting how many other fields matching the exact same
+  // (scope, key) appear earlier in the document. This works even when the
+  // page doesn't number its sections ("Employment History" repeated with
+  // no "1"/"2" labels) — it just counts occurrences in DOM order.
+  function getGroupIndex(el, scope, key) {
+    const all = document.querySelectorAll('input, textarea, select');
+    let index = 0;
+    for (const cand of all) {
+      if (cand === el) break;
+      if (!isFillable(cand)) continue;
+      const m = classifyField(cand);
+      if (m && m.scope === scope && m.key === key) index++;
+    }
+    return index;
   }
 
   function bestMatch(el) {
-    const sig = fieldSignature(el);
-    if (!sig) return null;
-    const block = findBlockContext(el);
-
-    if (block.context === 'experience') {
-      const key = matchRules(sig, EXPERIENCE_RULES);
-      if (key) return { key, index: block.index, scope: 'experience' };
-    }
-    if (block.context === 'education') {
-      const key = matchRules(sig, EDUCATION_RULES);
-      if (key) return { key, index: block.index, scope: 'education' };
-    }
-    const key = matchRules(sig, GENERIC_RULES);
-    if (key) return { key, index: 0, scope: 'generic' };
-    return null;
+    const classified = classifyField(el);
+    if (!classified) return null;
+    if (classified.scope === 'generic') return { ...classified, index: 0 };
+    const index = getGroupIndex(el, classified.scope, classified.key);
+    return { ...classified, index };
   }
 
   const MONTHS = { jan: '01', feb: '02', mar: '03', apr: '04', may: '05', jun: '06', jul: '07', aug: '08', sep: '09', oct: '10', nov: '11', dec: '12' };
@@ -183,7 +208,7 @@
     const parts = datesStr.split(/[-–]/).map(p => p.trim());
     const start = parts[0] || '';
     let end = parts[1] || '';
-    if (/present|current/i.test(end)) end = ''; // don't stuff "Present" into a date-formatted field
+    if (/present|current/i.test(end)) end = '';
     return { start: toMonthYear(start), end: toMonthYear(end) };
   }
 
@@ -194,7 +219,7 @@
       .map(line => {
         const trimmed = line.trim();
         if (!trimmed) return '';
-        if (/^[•\-*]\s/.test(trimmed)) return trimmed; // already bulleted
+        if (/^[•\-*]\s/.test(trimmed)) return trimmed;
         return `• ${trimmed}`;
       })
       .join('\n');
@@ -231,7 +256,6 @@
       }
     }
 
-    // generic scope
     switch (key) {
       case 'fullName': return profile.fullName || '';
       case 'firstName': return (profile.fullName || '').split(' ')[0] || '';
@@ -287,26 +311,25 @@
     return raw;
   }
 
-  function fillSelect(el, value) {
-    if (!value) return false;
-    const target = value.trim().toLowerCase();
-    for (const opt of el.options) {
-      const optText = opt.textContent.trim().toLowerCase();
-      if (optText === target || optText.startsWith(target) || target.startsWith(optText)) {
-        el.value = opt.value;
-        el.dispatchEvent(new Event('change', { bubbles: true }));
-        return true;
-      }
-    }
-    return false;
-  }
-
   function fillField(el, value) {
     const finalValue = (el.type === 'month' || el.type === 'date') ? toInputValue(value, el.type) : value;
     const setter = Object.getOwnPropertyDescriptor(el.__proto__, 'value')?.set;
     if (setter) setter.call(el, finalValue); else el.value = finalValue;
     el.dispatchEvent(new Event('input', { bubbles: true }));
     el.dispatchEvent(new Event('change', { bubbles: true }));
+  }
+
+  function fillSelect(el, value) {
+    if (!value) return;
+    const target = value.trim().toLowerCase();
+    for (const opt of el.options) {
+      const optText = opt.textContent.trim().toLowerCase();
+      if (optText === target || optText.startsWith(target) || target.startsWith(optText)) {
+        el.value = opt.value;
+        el.dispatchEvent(new Event('change', { bubbles: true }));
+        return;
+      }
+    }
   }
 
   function showBadge(el) {
@@ -343,10 +366,7 @@
 
   document.addEventListener('focusin', (e) => {
     const el = e.target;
-    if ((el.tagName === 'INPUT' && ['text', 'email', 'tel', 'url', 'month', 'date', ''].includes(el.type)) ||
-        el.tagName === 'TEXTAREA' || el.tagName === 'SELECT') {
-      showBadge(el);
-    }
+    if (isFillable(el)) showBadge(el);
   });
 
   document.addEventListener('focusout', () => {
