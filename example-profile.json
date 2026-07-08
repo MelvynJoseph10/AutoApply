@@ -19,13 +19,15 @@
   "experience": [
     {
       "title": "Software Developer",
-      "company": "Example Tech Inc, Toronto ON",
+      "company": "Example Tech Inc",
+      "location": "Toronto, ON",
       "dates": "June 2024 - present",
       "desc": "Built and maintained web application features using React and Node.js.\nCollaborated with a cross-functional team to ship weekly releases.\nWrote unit and integration tests to keep regressions to a minimum."
     },
     {
       "title": "IT Support Intern",
-      "company": "Example Corp, Remote",
+      "company": "Example Corp",
+      "location": "Remote",
       "dates": "January 2024 - May 2024",
       "desc": "Provided first-line support for internal software and hardware issues.\nDocumented recurring issues and created self-serve troubleshooting guides."
     }

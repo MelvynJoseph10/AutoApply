@@ -9,6 +9,24 @@ const eduList = document.getElementById('eduList');
 const addEduBtn = document.getElementById('addEdu');
 const savedMsg = document.getElementById('savedMsg');
 
+// Firefox (and Chrome) close the toolbar popup the instant it loses focus —
+// which happens the moment a native file picker opens. That breaks Import
+// (and can interrupt Export). Detect whether we're running as a small
+// popup vs. a full tab, and steer Import/Export through a full tab so the
+// file dialog can't kill the page underneath it.
+const isPopup = window.innerWidth < 500;
+
+document.getElementById('openTabBtn').addEventListener('click', () => {
+  chrome.tabs.create({ url: chrome.runtime.getURL('popup.html') });
+  window.close();
+});
+
+if (isPopup) {
+  document.getElementById('openTabBtn').style.display = 'block';
+} else {
+  document.getElementById('openTabBtn').style.display = 'none';
+}
+
 function makeEduEntry(data = {}) {
   const div = document.createElement('div');
   div.className = 'exp-entry';
@@ -34,6 +52,7 @@ function makeExpEntry(data = {}) {
     <button type="button" class="remove-exp" title="Remove">✕</button>
     <input type="text" class="exp-title" placeholder="Job title" value="${escapeAttr(data.title || '')}">
     <input type="text" class="exp-company" placeholder="Company" value="${escapeAttr(data.company || '')}">
+    <input type="text" class="exp-location" placeholder="Location (e.g. Vancouver, BC / Remote)" value="${escapeAttr(data.location || '')}">
     <input type="text" class="exp-dates" placeholder="Oct 2025 - Present" value="${escapeAttr(data.dates || '')}">
     <textarea class="exp-desc" rows="3" placeholder="Bullet points / description">${escapeHtml(data.desc || '')}</textarea>
   `;
@@ -100,6 +119,7 @@ form.addEventListener('submit', (e) => {
     experience: Array.from(expList.querySelectorAll('.exp-entry')).map(div => ({
       title: div.querySelector('.exp-title').value.trim(),
       company: div.querySelector('.exp-company').value.trim(),
+      location: div.querySelector('.exp-location').value.trim(),
       dates: div.querySelector('.exp-dates').value.trim(),
       desc: div.querySelector('.exp-desc').value.trim(),
     })).filter(exp => exp.title || exp.company || exp.desc)
@@ -113,6 +133,11 @@ form.addEventListener('submit', (e) => {
 });
 
 document.getElementById('exportBtn').addEventListener('click', () => {
+  if (isPopup) {
+    chrome.tabs.create({ url: chrome.runtime.getURL('popup.html') });
+    window.close();
+    return;
+  }
   chrome.storage.local.get(['profile'], (result) => {
     const blob = new Blob([JSON.stringify(result.profile || {}, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
@@ -125,6 +150,11 @@ document.getElementById('exportBtn').addEventListener('click', () => {
 });
 
 document.getElementById('importBtn').addEventListener('click', () => {
+  if (isPopup) {
+    chrome.tabs.create({ url: chrome.runtime.getURL('popup.html') });
+    window.close();
+    return;
+  }
   document.getElementById('importFile').click();
 });
 
