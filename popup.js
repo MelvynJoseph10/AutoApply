@@ -7,7 +7,24 @@ const expList = document.getElementById('expList');
 const addExpBtn = document.getElementById('addExp');
 const eduList = document.getElementById('eduList');
 const addEduBtn = document.getElementById('addEdu');
+const certList = document.getElementById('certList');
+const addCertBtn = document.getElementById('addCert');
 const savedMsg = document.getElementById('savedMsg');
+
+function makeCertEntry(data = {}) {
+  const div = document.createElement('div');
+  div.className = 'exp-entry';
+  div.innerHTML = `
+    <button type="button" class="remove-exp" title="Remove">✕</button>
+    <input type="text" class="cert-name" placeholder="Certification name (e.g. AWS Certified Solutions Architect – Associate)" value="${escapeAttr(data.name || '')}">
+  `;
+  div.querySelector('.remove-exp').addEventListener('click', () => div.remove());
+  return div;
+}
+
+addCertBtn.addEventListener('click', () => {
+  certList.appendChild(makeCertEntry());
+});
 
 // Firefox (and Chrome) close the toolbar popup the instant it loses focus —
 // which happens the moment a native file picker opens. That breaks Import
@@ -81,7 +98,7 @@ function loadProfile() {
   chrome.storage.local.get(['profile'], (result) => {
     const profile = result.profile || {};
     for (const [key, val] of Object.entries(profile)) {
-      if (key === 'experience' || key === 'education') continue;
+      if (key === 'experience' || key === 'education' || key === 'certs') continue;
       const field = form.elements[key];
       if (field) field.value = val;
     }
@@ -94,6 +111,16 @@ function loadProfile() {
     (profile.education || []).forEach(edu => eduList.appendChild(makeEduEntry(edu)));
     if (!profile.education || profile.education.length === 0) {
       eduList.appendChild(makeEduEntry());
+    }
+    certList.innerHTML = '';
+    let certs = profile.certs;
+    if (typeof certs === 'string') {
+      // legacy format: convert a one-per-line blob into entries
+      certs = certs.split('\n').map(line => line.trim()).filter(Boolean).map(name => ({ name }));
+    }
+    (certs || []).forEach(cert => certList.appendChild(makeCertEntry(cert)));
+    if (!certs || certs.length === 0) {
+      certList.appendChild(makeCertEntry());
     }
   });
 }
@@ -112,7 +139,9 @@ form.addEventListener('submit', (e) => {
     country: form.country.value.trim(),
     linkedin: form.linkedin.value.trim(),
     portfolio: form.portfolio.value.trim(),
-    certs: form.certs.value.trim(),
+    certs: Array.from(certList.querySelectorAll('.exp-entry')).map(div => ({
+      name: div.querySelector('.cert-name').value.trim(),
+    })).filter(c => c.name),
     skills: form.skills.value.trim(),
     education: Array.from(eduList.querySelectorAll('.exp-entry')).map(div => ({
       degree: div.querySelector('.edu-degree').value.trim(),

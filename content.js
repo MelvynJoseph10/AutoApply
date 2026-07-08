@@ -49,6 +49,10 @@
     { key: 'jobLocation', words: ['location', 'city'] },
   ];
 
+  // Fields that belong to ONE repeated certification block.
+  const CERTIFICATION_RULES = [
+    { key: 'certName', words: ['certification name', 'certificate name', 'license name', 'credential name', 'certification', 'certificate', 'license'] },
+  ];
   // Fields that belong to ONE repeated education block.
   const EDUCATION_RULES = [
     { key: 'gradYear', words: ['graduation year', 'grad year', 'year of graduation'] },
@@ -136,6 +140,7 @@
           const text = h.textContent;
           if (/experience|employment|job history|position/i.test(text)) return 'experience';
           if (/education|academic background/i.test(text)) return 'education';
+          if (/certification|certificate|license/i.test(text)) return 'certification';
         }
         sib = sib.previousElementSibling;
       }
@@ -158,6 +163,10 @@
     if (section === 'education') {
       const key = matchRules(sig, EDUCATION_RULES);
       if (key) return { key, scope: 'education' };
+    }
+    if (section === 'certification') {
+      const key = matchRules(sig, CERTIFICATION_RULES);
+      if (key) return { key, scope: 'certification' };
     }
     const key = matchRules(sig, GENERIC_RULES);
     if (key) return { key, scope: 'generic' };
@@ -257,6 +266,13 @@
       }
     }
 
+    if (scope === 'certification') {
+      const cert = (profile.certs || [])[index];
+      if (!cert) return '';
+      if (key === 'certName') return cert.name || '';
+      return '';
+    }
+
     switch (key) {
       case 'fullName': return profile.fullName || '';
       case 'firstName': return (profile.fullName || '').split(' ')[0] || '';
@@ -274,7 +290,7 @@
       case 'education': return formatEducation(profile.education || []);
       case 'school': return (profile.education && profile.education[0] && profile.education[0].school) || '';
       case 'skills': return profile.skills || '';
-      case 'certs': return profile.certs || '';
+      case 'certs': return (profile.certs || []).map(c => c.name).join('\n');
       case 'experience': return formatExperience(profile.experience || []);
       default: return '';
     }
@@ -346,6 +362,7 @@
   function entryLabel(scope, entry) {
     if (scope === 'experience') return `${entry.title || '(untitled)'} — ${entry.company || ''}`;
     if (scope === 'education') return `${entry.degree || '(untitled)'} — ${entry.school || ''}`;
+    if (scope === 'certification') return entry.name || '(untitled)';
     return '';
   }
 
@@ -371,6 +388,10 @@
         case 'eduDates': return entry.dates || '';
         default: return '';
       }
+    }
+    if (scope === 'certification') {
+      if (key === 'certName') return entry.name || '';
+      return '';
     }
     return '';
   }
@@ -406,6 +427,7 @@
     let list = null;
     if (match.scope === 'experience') list = profile.experience || [];
     if (match.scope === 'education') list = profile.education || [];
+    if (match.scope === 'certification') list = profile.certs || [];
 
     const usesPicker = list && list.length > 1;
     const value = usesPicker ? valueForEntry(match.scope, match.key, list[match.index] || list[0]) : valueFor(match);
