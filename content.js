@@ -183,6 +183,19 @@
     return { start: toMonthYear(start), end: toMonthYear(end) };
   }
 
+  function bulletize(text) {
+    if (!text) return text;
+    return text
+      .split('\n')
+      .map(line => {
+        const trimmed = line.trim();
+        if (!trimmed) return '';
+        if (/^[•\-*]\s/.test(trimmed)) return trimmed; // already bulleted
+        return `• ${trimmed}`;
+      })
+      .join('\n');
+  }
+
   function valueFor(match) {
     if (!profile) return '';
     const { key, index, scope } = match;
@@ -193,7 +206,7 @@
       switch (key) {
         case 'jobTitle': return job.title || '';
         case 'company': return job.company || '';
-        case 'jobDesc': return job.desc || '';
+        case 'jobDesc': return bulletize(job.desc || '');
         case 'jobLocation': return job.location || '';
         case 'startDate': return splitDates(job.dates).start;
         case 'endDate': return splitDates(job.dates).end;
@@ -235,7 +248,7 @@
 
   function formatExperience(list) {
     return list.map(e =>
-      `${e.title}${e.company ? ' — ' + e.company : ''}${e.dates ? ' (' + e.dates + ')' : ''}\n${e.desc || ''}`
+      `${e.title}${e.company ? ' — ' + e.company : ''}${e.dates ? ' (' + e.dates + ')' : ''}\n${bulletize(e.desc || '')}`
     ).join('\n\n');
   }
 
