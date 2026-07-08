@@ -75,18 +75,26 @@
   // <label for="..."> or wrapping (common in date-picker/dropdown widgets).
   // Stops at the first ancestor level that has any preceding-sibling text,
   // so it doesn't bleed into an unrelated adjacent field's label.
+  // Finds the CLOSEST preceding label text for this field only. Stops dead
+  // the moment it hits another field (bare input, or a wrapper containing
+  // one) — it never reads past a neighboring field to find "the next label
+  // back," which is what let "From"'s label leak into "To"'s signature
+  // when they're flat siblings sharing one row.
   function getNearbyLabelText(el) {
     let node = el;
     for (let level = 0; level < 3 && node; level++) {
       const parent = node.parentElement;
       if (!parent) break;
-      const texts = [];
-      for (const child of parent.children) {
-        if (child === node) break;
-        const t = child.textContent && child.textContent.trim();
-        if (t && t.length < 60) texts.push(t);
+      const siblings = Array.from(parent.children);
+      const idx = siblings.indexOf(node);
+      for (let i = idx - 1; i >= 0; i--) {
+        const sib = siblings[i];
+        if (sib.matches && sib.matches('input,select,textarea')) break;
+        if (sib.querySelector && sib.querySelector('input,select,textarea')) break;
+        const t = sib.textContent && sib.textContent.trim();
+        if (t && t.length < 60) return t;
+        if (t) break; // long/unrelated text block — stop rather than reach further back
       }
-      if (texts.length) return texts.join(' ');
       node = parent;
     }
     return '';
@@ -190,14 +198,22 @@
   // (scope, key) appear earlier in the document. This works even when the
   // page doesn't number its sections ("Employment History" repeated with
   // no "1"/"2" labels) — it just counts occurrences in DOM order.
-  function getGroupIndex(el, scope, key) {
+  // Rather than have every field type count its own occurrences (which can
+  // drift out of sync between fields in the same block — e.g. "From" and
+  // "To" ending up with different computed indices), anchor ALL fields in
+  // a block to one reliable marker field that reliably appears once near
+  // the top of each entry.
+  const ANCHOR_KEY = { experience: 'company', education: 'school', certification: 'certName' };
+
+  function getGroupIndex(el, scope) {
+    const anchorKey = ANCHOR_KEY[scope];
     const all = document.querySelectorAll('input, textarea, select');
     let index = 0;
     for (const cand of all) {
       if (cand === el) break;
       if (!isFillable(cand)) continue;
       const m = classifyField(cand);
-      if (m && m.scope === scope && m.key === key) index++;
+      if (m && m.scope === scope && m.key === anchorKey) index++;
     }
     return index;
   }
@@ -206,7 +222,7 @@
     const classified = classifyField(el);
     if (!classified) return null;
     if (classified.scope === 'generic') return { ...classified, index: 0 };
-    const index = getGroupIndex(el, classified.scope, classified.key);
+    const index = getGroupIndex(el, classified.scope);
     return { ...classified, index };
   }
 
