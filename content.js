@@ -105,11 +105,20 @@
     return parts.filter(Boolean).join(' ').toLowerCase();
   }
 
+  function normalize(s) {
+    return s.replace(/[^a-z0-9]/g, '');
+  }
+
   function wordMatches(sig, w) {
     if (w.length <= 3 && !w.includes(' ')) {
       return new RegExp(`\\b${w}\\b`).test(sig);
     }
-    return sig.includes(w);
+    if (sig.includes(w)) return true;
+    // Catches attribute names like "addressLine1" or "postal_code" that
+    // don't have spaces, by comparing a punctuation/space-stripped version.
+    const normW = normalize(w);
+    if (normW.length < 4) return false;
+    return normalize(sig).includes(normW);
   }
 
   function matchRules(sig, rules) {
