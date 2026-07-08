@@ -26,6 +26,10 @@
     { key: 'email', words: ['email', 'e-mail'] },
     { key: 'phone', words: ['phone', 'mobile', 'tel', 'contact number'] },
     { key: 'city', words: ['city', 'town'] },
+    { key: 'province', words: ['province', 'state', 'territory'] },
+    { key: 'streetAddress', words: ['address line 1', 'street address', 'address1', 'street'] },
+    { key: 'addressLine2', words: ['address line 2', 'address2', 'apt', 'suite', 'unit'] },
+    { key: 'postalCode', words: ['postal code', 'zip code', 'zip', 'postcode'] },
     { key: 'country', words: ['country', 'nation'] },
     { key: 'linkedin', words: ['linkedin'] },
     { key: 'portfolio', words: ['portfolio', 'github', 'website', 'personal site'] },
@@ -235,6 +239,10 @@
       case 'email': return profile.email || '';
       case 'phone': return profile.phone || '';
       case 'city': return profile.city || '';
+      case 'province': return profile.province || '';
+      case 'streetAddress': return profile.streetAddress || '';
+      case 'addressLine2': return profile.addressLine2 || '';
+      case 'postalCode': return profile.postalCode || '';
       case 'country': return profile.country || '';
       case 'linkedin': return profile.linkedin || '';
       case 'portfolio': return profile.portfolio || '';
@@ -279,6 +287,20 @@
     return raw;
   }
 
+  function fillSelect(el, value) {
+    if (!value) return false;
+    const target = value.trim().toLowerCase();
+    for (const opt of el.options) {
+      const optText = opt.textContent.trim().toLowerCase();
+      if (optText === target || optText.startsWith(target) || target.startsWith(optText)) {
+        el.value = opt.value;
+        el.dispatchEvent(new Event('change', { bubbles: true }));
+        return true;
+      }
+    }
+    return false;
+  }
+
   function fillField(el, value) {
     const finalValue = (el.type === 'month' || el.type === 'date') ? toInputValue(value, el.type) : value;
     const setter = Object.getOwnPropertyDescriptor(el.__proto__, 'value')?.set;
@@ -308,7 +330,11 @@
     badge.addEventListener('mousedown', (e) => {
       e.preventDefault();
       e.stopPropagation();
-      fillField(el, value);
+      if (el.tagName === 'SELECT') {
+        fillSelect(el, value);
+      } else {
+        fillField(el, value);
+      }
       removeUI();
     });
 
@@ -317,8 +343,8 @@
 
   document.addEventListener('focusin', (e) => {
     const el = e.target;
-    if (el.tagName === 'INPUT' && ['text', 'email', 'tel', 'url', 'month', 'date', ''].includes(el.type) ||
-        el.tagName === 'TEXTAREA') {
+    if ((el.tagName === 'INPUT' && ['text', 'email', 'tel', 'url', 'month', 'date', ''].includes(el.type)) ||
+        el.tagName === 'TEXTAREA' || el.tagName === 'SELECT') {
       showBadge(el);
     }
   });
