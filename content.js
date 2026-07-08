@@ -33,6 +33,7 @@
     { key: 'linkedin', words: ['linkedin'] },
     { key: 'portfolio', words: ['portfolio', 'github', 'website', 'personal site'] },
     { key: 'education', words: ['education', 'academic background', 'qualifications'] },
+    { key: 'school', words: ['specify institution', 'specify educational institution', 'specify school', 'specify college', 'specify university', 'other institution'] },
     { key: 'skills', words: ['skills', 'skillset', 'technologies', 'tech stack'] },
     { key: 'certs', words: ['certification', 'certificate', 'license'] },
     { key: 'experience', words: ['experience', 'work history', 'employment', 'cover letter', 'about you', 'summary', 'tell us'] },
@@ -52,7 +53,7 @@
   const EDUCATION_RULES = [
     { key: 'gradYear', words: ['graduation year', 'grad year', 'year of graduation'] },
     { key: 'degree', words: ['degree', 'major', 'field of study', 'qualification'] },
-    { key: 'school', words: ['school name', 'college name', 'university name', 'institution', 'alma mater', 'school', 'college', 'university'] },
+    { key: 'school', words: ['school name', 'college name', 'university name', 'institution', 'alma mater', 'specify institution', 'specify educational institution', 'specify school', 'specify college', 'specify university', 'other institution', 'school', 'college', 'university'] },
     { key: 'eduLocation', words: ['location', 'city'] },
     { key: 'eduDates', words: ['from date', 'start date', 'to date', 'end date', 'from', 'to', 'dates'] },
   ];
@@ -271,6 +272,7 @@
       case 'linkedin': return profile.linkedin || '';
       case 'portfolio': return profile.portfolio || '';
       case 'education': return formatEducation(profile.education || []);
+      case 'school': return (profile.education && profile.education[0] && profile.education[0].school) || '';
       case 'skills': return profile.skills || '';
       case 'certs': return profile.certs || '';
       case 'experience': return formatExperience(profile.experience || []);
@@ -290,9 +292,12 @@
     ).join('\n');
   }
 
+  let menu = null;
+
   function removeUI() {
     if (badge) badge.remove();
-    badge = null;
+    if (menu) menu.remove();
+    badge = null; menu = null;
   }
 
   function toInputValue(raw, type) {
@@ -332,12 +337,80 @@
     }
   }
 
+  function applyValue(el, value) {
+    if (el.tagName === 'SELECT') fillSelect(el, value);
+    else fillField(el, value);
+  }
+
+  // Builds a short human label for one entry, used in the picker menu.
+  function entryLabel(scope, entry) {
+    if (scope === 'experience') return `${entry.title || '(untitled)'} — ${entry.company || ''}`;
+    if (scope === 'education') return `${entry.degree || '(untitled)'} — ${entry.school || ''}`;
+    return '';
+  }
+
+  function valueForEntry(scope, key, entry) {
+    if (!entry) return '';
+    if (scope === 'experience') {
+      switch (key) {
+        case 'jobTitle': return entry.title || '';
+        case 'company': return entry.company || '';
+        case 'jobDesc': return bulletize(entry.desc || '');
+        case 'jobLocation': return entry.location || '';
+        case 'startDate': return splitDates(entry.dates).start;
+        case 'endDate': return splitDates(entry.dates).end;
+        default: return '';
+      }
+    }
+    if (scope === 'education') {
+      switch (key) {
+        case 'degree': return entry.degree || '';
+        case 'school': return entry.school || '';
+        case 'eduLocation': return entry.location || '';
+        case 'gradYear': return entry.dates || '';
+        case 'eduDates': return entry.dates || '';
+        default: return '';
+      }
+    }
+    return '';
+  }
+
+  function showPicker(el, match, list) {
+    removeUI();
+    menu = document.createElement('div');
+    menu.className = 'jaf-menu';
+    list.forEach((entry, i) => {
+      const item = document.createElement('div');
+      item.className = 'jaf-menu-item';
+      item.textContent = entryLabel(match.scope, entry);
+      item.addEventListener('mousedown', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        applyValue(el, valueForEntry(match.scope, match.key, entry));
+        removeUI();
+      });
+      menu.appendChild(item);
+    });
+    const rect = el.getBoundingClientRect();
+    menu.style.top = `${window.scrollY + rect.bottom + 4}px`;
+    menu.style.left = `${window.scrollX + rect.left}px`;
+    menu.style.minWidth = `${Math.max(rect.width, 200)}px`;
+    document.body.appendChild(menu);
+  }
+
   function showBadge(el) {
     if (!profile) return;
     const match = bestMatch(el);
     if (!match) return;
-    const value = valueFor(match);
-    if (!value) return;
+
+    let list = null;
+    if (match.scope === 'experience') list = profile.experience || [];
+    if (match.scope === 'education') list = profile.education || [];
+
+    const usesPicker = list && list.length > 1;
+    const value = usesPicker ? valueForEntry(match.scope, match.key, list[match.index] || list[0]) : valueFor(match);
+    if (!usesPicker && !value) return;
+    if (usesPicker && !list.some(entry => valueForEntry(match.scope, match.key, entry))) return;
 
     removeUI();
     activeField = el;
@@ -346,19 +419,19 @@
     badge = document.createElement('div');
     badge.className = 'jaf-badge';
     badge.textContent = '⚡';
-    badge.title = 'Fill from saved profile';
+    badge.title = usesPicker ? 'Choose which one to fill from' : 'Fill from saved profile';
     badge.style.top = `${window.scrollY + rect.top + rect.height / 2 - 11}px`;
     badge.style.left = `${window.scrollX + rect.right - 26}px`;
 
     badge.addEventListener('mousedown', (e) => {
       e.preventDefault();
       e.stopPropagation();
-      if (el.tagName === 'SELECT') {
-        fillSelect(el, value);
+      if (usesPicker) {
+        showPicker(el, match, list);
       } else {
-        fillField(el, value);
+        applyValue(el, valueFor(match));
+        removeUI();
       }
-      removeUI();
     });
 
     document.body.appendChild(badge);
