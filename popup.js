@@ -40,6 +40,8 @@ document.getElementById('openTabBtn').addEventListener('click', () => {
 
 if (isPopup) {
   document.getElementById('openTabBtn').style.display = 'block';
+  document.getElementById('exportBtn').style.display = 'none';
+  document.getElementById('importBtn').style.display = 'none';
 } else {
   document.getElementById('openTabBtn').style.display = 'none';
 }
