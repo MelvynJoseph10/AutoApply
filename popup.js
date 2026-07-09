@@ -211,9 +211,18 @@ document.getElementById('importFile').addEventListener('change', (e) => {
 });
 
 document.getElementById('wipeBtn').addEventListener('click', () => {
-  if (confirm('Erase all saved autofill data from this browser? This cannot be undone.')) {
-    chrome.storage.local.remove(['profile'], loadProfile);
-  }
+  document.getElementById('confirmOverlay').style.display = 'flex';
+});
+
+document.getElementById('confirmCancel').addEventListener('click', () => {
+  document.getElementById('confirmOverlay').style.display = 'none';
+});
+
+document.getElementById('confirmErase').addEventListener('click', () => {
+  chrome.storage.local.remove(['profile'], () => {
+    loadProfile();
+    document.getElementById('confirmOverlay').style.display = 'none';
+  });
 });
 
 loadProfile();
