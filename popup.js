@@ -34,6 +34,7 @@ addCertBtn.addEventListener('click', () => {
 // immediately trigger its file picker automatically — one click instead
 // of two.
 const isPopup = window.innerWidth < 500;
+if (!isPopup) document.body.classList.add('full-tab');
 const autoImport = new URLSearchParams(window.location.search).get('autoImport') === '1';
 
 if (autoImport) {
@@ -193,7 +194,15 @@ document.getElementById('importFile').addEventListener('change', (e) => {
   reader.onload = () => {
     try {
       const profile = JSON.parse(reader.result);
-      chrome.storage.local.set({ profile }, loadProfile);
+      chrome.storage.local.set({ profile }, () => {
+        loadProfile();
+        if (autoImport) {
+          // This tab only existed to let the file picker survive — its
+          // job is done, close it and return to whatever the user was
+          // doing before.
+          setTimeout(() => window.close(), 400);
+        }
+      });
     } catch (err) {
       alert('That file does not look like a valid backup.');
     }

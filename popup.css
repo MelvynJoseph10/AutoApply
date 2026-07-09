@@ -180,3 +180,27 @@ footer {
 }
 .link:hover { color: var(--blue-dark); }
 .link.danger:hover { color: var(--danger); }
+
+/* When opened as a full tab (not the small toolbar popup), center the
+   card nicely instead of leaving it stranded in the top-left corner of
+   a huge blank page. */
+body.full-tab {
+  width: 100vw;
+  max-height: none;
+  overflow-y: visible;
+  min-height: 100vh;
+  background: #e2e8f0;
+  display: flex;
+  justify-content: center;
+  padding-top: 40px;
+  box-sizing: border-box;
+}
+
+body.full-tab .wrap {
+  width: 340px;
+  background: var(--bg);
+  border-radius: 12px;
+  box-shadow: 0 8px 30px rgba(0,0,0,0.12);
+  height: fit-content;
+  align-self: flex-start;
+}
