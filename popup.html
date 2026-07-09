@@ -10,7 +10,6 @@
     <header>
       <h1>Autofill Profile</h1>
       <span class="badge">Stored locally on this device only</span>
-      <button type="button" id="openTabBtn" class="link" style="display:block;margin-top:4px;">Open in full tab (needed for Import/Export)</button>
     </header>
 
     <div class="tabs">
@@ -78,18 +77,20 @@
       </section>
       </div>
 
-      <div class="actions">
-        <button type="submit" id="saveBtn">Save</button>
-        <span id="savedMsg" class="saved-msg"></span>
+      <div class="pinned-bottom">
+        <div class="actions">
+          <button type="submit" id="saveBtn">Save</button>
+          <span id="savedMsg" class="saved-msg"></span>
+        </div>
+
+        <footer>
+          <button id="exportBtn" class="link">Export backup</button>
+          <button id="importBtn" class="link">Import backup</button>
+          <button id="wipeBtn" class="link danger">Erase all data</button>
+          <input type="file" id="importFile" accept="application/json" style="display:none">
+        </footer>
       </div>
     </form>
-
-    <footer>
-      <button id="exportBtn" class="link">Export backup</button>
-      <button id="importBtn" class="link">Import backup</button>
-      <button id="wipeBtn" class="link danger">Erase all data</button>
-      <input type="file" id="importFile" accept="application/json" style="display:none">
-    </footer>
   </div>
   <script src="popup.js"></script>
 </body>

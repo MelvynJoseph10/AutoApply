@@ -26,24 +26,20 @@ addCertBtn.addEventListener('click', () => {
   certList.appendChild(makeCertEntry());
 });
 
-// Firefox (and Chrome) close the toolbar popup the instant it loses focus —
-// which happens the moment a native file picker opens. That breaks Import
-// (and can interrupt Export). Detect whether we're running as a small
-// popup vs. a full tab, and steer Import/Export through a full tab so the
-// file dialog can't kill the page underneath it.
+// Import needs a file-picker dialog, which closes the toolbar popup before
+// a file is even chosen (opening a native dialog blurs the popup — a
+// Firefox/Chrome platform limitation, not something we can prevent).
+// Export just downloads directly (no dialog), so it works fine here.
+// For Import from the small popup: open the full-tab version AND
+// immediately trigger its file picker automatically — one click instead
+// of two.
 const isPopup = window.innerWidth < 500;
+const autoImport = new URLSearchParams(window.location.search).get('autoImport') === '1';
 
-document.getElementById('openTabBtn').addEventListener('click', () => {
-  chrome.tabs.create({ url: chrome.runtime.getURL('popup.html') });
-  window.close();
-});
-
-if (isPopup) {
-  document.getElementById('openTabBtn').style.display = 'block';
-  document.getElementById('exportBtn').style.display = 'none';
-  document.getElementById('importBtn').style.display = 'none';
-} else {
-  document.getElementById('openTabBtn').style.display = 'none';
+if (autoImport) {
+  window.addEventListener('load', () => {
+    document.getElementById('importFile').click();
+  });
 }
 
 function makeEduEntry(data = {}) {
@@ -170,11 +166,6 @@ form.addEventListener('submit', (e) => {
 });
 
 document.getElementById('exportBtn').addEventListener('click', () => {
-  if (isPopup) {
-    chrome.tabs.create({ url: chrome.runtime.getURL('popup.html') });
-    window.close();
-    return;
-  }
   chrome.storage.local.get(['profile'], (result) => {
     const blob = new Blob([JSON.stringify(result.profile || {}, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
@@ -188,7 +179,7 @@ document.getElementById('exportBtn').addEventListener('click', () => {
 
 document.getElementById('importBtn').addEventListener('click', () => {
   if (isPopup) {
-    chrome.tabs.create({ url: chrome.runtime.getURL('popup.html') });
+    chrome.tabs.create({ url: chrome.runtime.getURL('popup.html') + '?autoImport=1' });
     window.close();
     return;
   }
