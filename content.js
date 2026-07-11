@@ -212,7 +212,15 @@
     for (const cand of all) {
       if (cand === el) break;
       if (!isFillable(cand)) continue;
-      const m = classifyField(cand);
+      let m = null;
+      try {
+        m = classifyField(cand);
+      } catch (err) {
+        // One unusual field on a complex page (hidden widgets, encoded
+        // data blobs, etc.) shouldn't be able to silently break matching
+        // for every other field on the page.
+        continue;
+      }
       if (m && m.scope === scope && m.key === anchorKey) index++;
     }
     return index;
@@ -495,7 +503,14 @@
 
   document.addEventListener('focusin', (e) => {
     const el = e.target;
-    if (isFillable(el)) showBadge(el);
+    if (isFillable(el)) {
+      try {
+        showBadge(el);
+      } catch (err) {
+        // Never let one unusual field on a complex page silently kill
+        // the extension for the rest of the page.
+      }
+    }
   });
 
   document.addEventListener('focusout', () => {
